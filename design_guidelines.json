@@ -1,0 +1,83 @@
+{
+  "theme": "Light theme preferred with premium dark accents to evoke warmth, quality, and organic freshness. Avoid stark hospital whites. Use warm cream backgrounds.",
+  "typography": {
+    "headings": "Cormorant Garamond or Playfair Display (Serif, heritage, premium feel).",
+    "body": "Manrope, Figtree, or Outfit (Geometric/Humanist sans-serif for clean legibility).",
+    "rules": "Never use Inter for headings. Keep tight tracking on large headings (tracking-tighter). Avoid generic font combinations. The heading jump should not exceed 2 Tailwind steps. Ensure minimum 4.5:1 contrast for regular text."
+  },
+  "colors": {
+    "primary": "#1A3620",
+    "secondary": "#D99A46",
+    "background_main": "#F9F8F4",
+    "surface_card": "#FFFFFF",
+    "text_main": "#1C1C1C",
+    "text_muted": "#595959",
+    "status_open": "#22C55E",
+    "status_closed": "#EF4444",
+    "overlay_cinematic": "linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.4))"
+  },
+  "visual_enhancers": {
+    "shadows": "Soft, diffused ambient shadows for cards, e.g., 'shadow-[0_8px_32px_rgba(26,54,32,0.06)]'. No harsh block shadows.",
+    "borders": "Minimal. 1px solid border with subtle opacity (border-black/5) on light surfaces.",
+    "corner_radius": "Rounded cards (rounded-2xl to rounded-3xl) to create an inviting, organic feel.",
+    "textures": "Subtle grain/noise overlay on dark green sections to introduce tactile quality (optional but recommended for premium feel)."
+  },
+  "layouts": {
+    "hero_split_screen": {
+      "desktop": "Height ~90-100vh. LEFT SIDE (~60% width): Background is the storefront photo with a dark cinematic gradient overlay (bg-black/60 to bg-black/30). Contains headline, description, and primary CTAs. RIGHT SIDE (~40% width): Features a continuous vertical/portrait reel video (autoplay, muted, loop, playsinline). Behind the video, use a blurred-ambient background treatment (backdrop-blur with dominant color).",
+      "mobile": "Stacked vertically (~70-80vh for the left image+text segment), followed by the vertical video segment directly below it."
+    },
+    "departments_grid": "Grid of 6 large editorial image cards. grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6. Images must fill the card, with heavy bottom gradients to ensure text legibility. Hover zoom effect on images.",
+    "weekly_specials": "Build an easily-editable data structure (array of objects) containing image, name, regular price, sale price, unit, and sale badge. Display as a sleek grid or Swiper slider.",
+    "why_shop": "Grid layout for 5 benefits (grid-cols-2 md:grid-cols-5 or similar flex wrap). Use tasteful, minimalist vector icons.",
+    "reviews": "2 Google-style testimonial cards featuring 5-star icons and avatars. Place side by side on desktop.",
+    "footer": "Premium layout with generous padding (py-24). Include quick links, contact info, dynamic hours, social icons, copyright, and 'Website by Verified Digital Solutions'."
+  },
+  "motion": {
+    "hero_video": "playsinline, autoplay, muted, loop, no controls. Must never be stretched out of aspect ratio.",
+    "scroll": "Smooth scrolling is mandatory (use Lenis if applicable, or smooth CSS scroll). Implement scroll-reveal animations for sections (fade-in, subtle translate-y).",
+    "hover": "Hover zoom on department cards (image scale up, text subtle lift). Buttons should have satisfying scale or color transition."
+  },
+  "accessibility": {
+    "contrast": "Text over images MUST have gradient overlays. Minimum 4.5:1 ratio.",
+    "testing": "All interactive elements (buttons, links, toggles) MUST have data-testid attributes.",
+    "aria": "Use aria-labels for all icon-only buttons (like social media links or hamburgers)."
+  },
+  "components": [
+    {
+      "name": "DynamicStatus",
+      "instructions": "Calculates if store is open based on America/Vancouver timezone. 10 AM to 9 PM, Monday-Sunday. Renders a green dot + 'Open Now — Closes at 9 PM' or red dot + 'Closed — Opens at 10 AM'."
+    },
+    {
+      "name": "StickyNavbar",
+      "instructions": "Glassmorphism over hero (backdrop-blur-xl bg-black/40 with light text). Transitions to a solid warm cream (bg-[#F9F8F4]) with charcoal text on scroll. DO NOT use fully transparent background where content can clash. Includes mobile hamburger menu."
+    }
+  ],
+  "media": {
+    "fallback_images": {
+      "storefront_exterior": "https://images.unsplash.com/photo-1727289186043-31e971d07797?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHxvcmdhbmljJTIwZ3JvY2VyeSUyMHN0b3JlJTIwZXh0ZXJpb3J8ZW58MHx8fHwxNzg4MTI4ODE1fDA&ixlib=rb-4.1.0&q=85",
+      "hero_background": "https://images.unsplash.com/photo-1724908097678-1cb50ee5e352?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NjV8MHwxfHNlYXJjaHwzfHxwcmVtaXVtJTIwZ3JvY2VyeSUyMHN0b3JlJTIwaW50ZXJpb3IlMjBwcm9kdWNlfGVufDB8fHx8MTc4ODEyODgwMHww&ixlib=rb-4.1.0&q=85",
+      "halal_meat": "https://images.pexels.com/photos/10647859/pexels-photo-10647859.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "produce": "https://images.unsplash.com/photo-1749999391348-0eb741554ae7?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NjV8MHwxfHNlYXJjaHwyfHxwcmVtaXVtJTIwZ3JvY2VyeSUyMHN0b3JlJTIwaW50ZXJpb3IlMjBwcm9kdWNlfGVufDB8fHx8MTc4ODEyODgwMHww&ixlib=rb-4.1.0&q=85",
+      "rice_pantry": "https://images.unsplash.com/photo-1738680981750-8e86e384501e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHwxfHxkcnklMjBmcnVpdHMlMjBudXRzJTIwbWFya2V0JTIwZGlzcGxheXxlbnwwfHx8fDE3ODgxMjg4MDB8MA&ixlib=rb-4.1.0&q=85",
+      "spices": "https://images.unsplash.com/photo-1766158554276-fcba78477081?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTV8MHwxfHNlYXJjaHwxfHxzcGljZXMlMjBtYXJrZXQlMjBvcmdhbmljJTIwY2xvc2UlMjB1cHxlbnwwfHx8fDE3ODgxMjg4MDB8MA&ixlib=rb-4.1.0&q=85",
+      "dry_fruits": "https://images.unsplash.com/photo-1636816571948-121db9832798?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzV8MHwxfHNlYXJjaHw0fHxkcnklMjBmcnVpdHMlMjBudXRzJTIwbWFya2V0JTIwZGlzcGxheXxlbnwwfHx8fDE3ODgxMjg4MDB8MA&ixlib=rb-4.1.0&q=85",
+      "bakery": "https://images.unsplash.com/photo-1568254183919-78a4f43a2877?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxmcmVzaCUyMGFydGlzYW4lMjBiYWtlcnklMjBicmVhZCUyMGRpc3BsYXl8ZW58MHx8fHwxNzg4MTI4ODAwfDA&ixlib=rb-4.1.0&q=85",
+      "immersive_community": "https://images.unsplash.com/photo-1774887679529-7fb933596f37?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA0MTJ8MHwxfHNlYXJjaHwzfHxwZW9wbGUlMjBzaG9wcGluZyUyMG9yZ2FuaWMlMjBtYXJrZXQlMjBzbWlsaW5nfGVufDB8fHx8MTc4ODEyODgwOHww&ixlib=rb-4.1.0&q=85",
+      "hero_reel_video": "https://videos.pexels.com/video-files/5803080/5803080-uhd_1440_2560_24fps.mp4"
+    },
+    "instruction": "If local assets are provided in the repository (like exterior photo, interior aisle, bakery display, dry fruits, reel video), prioritize using those! If they do not exist, fall back immediately to the URLs provided above to avoid broken links."
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Prioritize a premium, 'Godly website' design language. The aesthetic is Erewhon meets high-end local community grocer.",
+    "Use Generous Spacing. Elements must breathe. If standard padding is p-4, use p-8 or p-12. Sections should use py-24 or py-32.",
+    "Avoid generic Bootstrap-like layouts. Use overlapping layers, bento grids, or asymmetrical balance where appropriate.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur). NEVER use completely transparent backgrounds where text can clash with underlying content.",
+    "Do not apply global 'transition: all' in CSS. Apply transitions strictly to intended properties like transform and opacity.",
+    "Do not center-align the app container. Align text left for readibility, especially in text-heavy blocks.",
+    "Include data-testid on every interactive element.",
+    "Use Lucide-react for all iconography.",
+    "Provide instructions in standard .jsx or .js as per the current stack constraint (no TypeScript).",
+    "Never use AI emoji placeholders (e.g., 🤖, 🛒, 🌟). Use professional Lucide icons instead."
+  ]
+}

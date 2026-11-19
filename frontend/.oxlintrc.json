@@ -1,0 +1,16 @@
+{
+    "$schema": "https://raw.githubusercontent.com/oxc-project/oxc/main/npm/oxlint/configuration_schema.json",
+    "ignorePatterns": [
+        "**/node_modules/**",
+        "**/.next/**",
+        "**/out/**",
+        "**/dist/**",
+        "**/build/**"
+    ],
+    "globals": {
+        "__REACT_DEVTOOLS_GLOBAL_HOOK__": "readonly",
+        "TURBOPACK_NEXT_CHUNK_URLS": "readonly",
+        "TURBOPACK_CHUNK_BASE_PATH": "readonly",
+        "importScripts": "readonly"
+    }
+}
