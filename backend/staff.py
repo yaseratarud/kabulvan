@@ -6,13 +6,13 @@ import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from typing import Literal
+from typing import Annotated, Literal
 
 import bcrypt
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 from pymongo import ReturnDocument
 from pymongo.errors import DuplicateKeyError
 
@@ -87,6 +87,7 @@ class Line(BaseModel):
 
 
 class Ticket(BaseModel):
+    customer_name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=80)]
     key: str = Field(pattern=r"^[a-f0-9-]{36}$")
     items: list[Line] = Field(min_length=1, max_length=50)
 
@@ -256,7 +257,7 @@ def staff_router(db):
             raise HTTPException(409, "An item is unavailable. Refresh the menu.")
         order = {
             "_id": order_id, "number": data.key[:8].upper(), "created_at": now().isoformat(),
-            "cashier": employee["_id"], "status": "new",
+            "cashier": employee["_id"], "status": "new", "customer_name": data.customer_name,
             "items": [
                 {"name": available[line.item_id], "quantity": line.quantity} for line in data.items
             ],

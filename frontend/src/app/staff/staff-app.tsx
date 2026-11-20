@@ -9,6 +9,7 @@ type Status = "new" | "preparing" | "completed";
 type Order = {
     _id: string;
     number: string;
+    customer_name?: string;
     created_at: string;
     status: Status;
     cashier: string;
@@ -154,6 +155,7 @@ export default function StaffApp() {
 function Cashier({ run }: { run: Run }) {
     const [menu, setMenu] = useState<Item[]>([]);
     const [cart, setCart] = useState<Record<string, number>>({});
+    const [customerName, setCustomerName] = useState("");
     const [sent, setSent] = useState("");
     const [retry, setRetry] = useState(false);
     const [sending, setSending] = useState(false);
@@ -169,7 +171,7 @@ function Cashier({ run }: { run: Run }) {
     }
 
     async function send() {
-        if (submitting.current || selected.length === 0) return;
+        if (submitting.current || selected.length === 0 || !customerName.trim()) return;
         submitting.current = true;
         setSending(true);
         try {
@@ -178,10 +180,12 @@ function Cashier({ run }: { run: Run }) {
                 try {
                     const order = await api<Order>("orders", "POST", {
                         key: ticketKey.current,
+                        customer_name: customerName.trim(),
                         items: selected.map(([item_id, quantity]) => ({ item_id, quantity })),
                     });
                     setSent("Order #" + order.number + " sent to kitchen.");
                     setCart({});
+                    setCustomerName("");
                     ticketKey.current = null;
                     setRetry(false);
                 } catch (failure) {
@@ -217,6 +221,11 @@ function Cashier({ run }: { run: Run }) {
         </div>
         <div className={card}>
             <h2 className="mb-4 text-xl font-bold">Current order</h2>
+            <label className="mb-4 block font-semibold">Name for the order
+                <input className={field + " mt-1 font-normal"} value={customerName} maxLength={80}
+                    required autoComplete="off" autoCapitalize="words" disabled={sending || retry}
+                    onChange={(event) => { setCustomerName(event.target.value); setSent(""); }} />
+            </label>
             {selected.length === 0 && <p className="mb-4">Select items from the menu.</p>}
             {selected.map(([id, quantity]) => <div key={id} className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <span>{menu.find((item) => item._id === id)?.name ?? "Unavailable item"}</span>
@@ -226,7 +235,7 @@ function Cashier({ run }: { run: Run }) {
                     <button className={button} disabled={sending || retry} aria-label="Add one" onClick={() => change(id, 1)}>+</button>
                 </div>
             </div>)}
-            <button className={primary + " w-full"} disabled={sending || !selected.length} onClick={() => void send()}>
+            <button className={primary + " w-full"} disabled={sending || !selected.length || !customerName.trim()} onClick={() => void send()}>
                 {sending ? "Sending…" : retry ? "Retry send to kitchen" : "Send to kitchen"}
             </button>
             {sent && <p role="status" className="mt-3 text-emerald-800">{sent}</p>}
@@ -333,6 +342,7 @@ function Ticket({ order }: { order: Order }) {
             <h3 className="text-xl font-bold">Order #{order.number}</h3>
             <span className="rounded-full bg-emerald-100 px-3 py-1 capitalize text-emerald-900">{order.status}</span>
         </div>
+        {order.customer_name && <p className="mt-2 break-words text-lg font-semibold">{order.customer_name}</p>}
         <p className="mt-1 text-sm text-stone-600">{dateTime.format(new Date(order.created_at))} · {order.cashier}</p>
         <ul className="mt-3 grid gap-1">
             {order.items.map((item, index) => <li key={index}>{item.quantity} × {item.name}</li>)}
