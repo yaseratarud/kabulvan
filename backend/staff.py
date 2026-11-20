@@ -303,13 +303,13 @@ def staff_router(db):
         ]}
 
     @router.get("/pickup")
-    async def pickup_board():
-        tickets = orders.find(pickup_criteria(), {"_id": 0, "number": 1, "status": 1}).sort(
+    async def pickup_board(employee=Depends(require("kitchen", "admin"))):
+        tickets = orders.find(pickup_criteria(), {"_id": 0, "number": 1, "status": 1, "customer_name": 1}).sort(
             [("created_at", 1), ("_id", 1)]
         )
         preparing, ready = [], []
         async for ticket in tickets:
-            (ready if ticket["status"] == "completed" else preparing).append(ticket["number"])
+            (ready if ticket["status"] == "completed" else preparing).append({"number": ticket["number"], "name": ticket.get("customer_name")})
         return {"preparing": preparing, "ready": ready}
 
     @router.get("/stream")

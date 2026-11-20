@@ -2,19 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 
-type Orders = { preparing: string[]; ready: string[] };
+type PickupTicket = { number: string; name: string | null };
+type Orders = { preparing: PickupTicket[]; ready: PickupTicket[] };
 
 export default function PickupBoard() {
     const [orders, setOrders] = useState<Orders>();
     const [offline, setOffline] = useState(false);
+    const [signInRequired, setSignInRequired] = useState(false);
     const board = useRef<HTMLElement>(null);
 
     useEffect(() => {
         const controller = new AbortController();
+        let authorized = true;
         let timer: ReturnType<typeof setTimeout>;
         async function refresh() {
             try {
                 const response = await fetch("/api/staff/pickup", { cache: "no-store", signal: controller.signal });
+                if (response.status === 401 || response.status === 403) {
+                    authorized = false;
+                    setOrders(undefined);
+                    setSignInRequired(true);
+                    return;
+                }
                 if (!response.ok) throw new Error("Pickup display unavailable");
                 const next: Orders = await response.json();
                 if (!controller.signal.aborted) {
@@ -24,7 +33,7 @@ export default function PickupBoard() {
             } catch {
                 if (!controller.signal.aborted) setOffline(true);
             } finally {
-                if (!controller.signal.aborted) timer = setTimeout(refresh, 3000);
+                if (authorized && !controller.signal.aborted) timer = setTimeout(refresh, 3000);
             }
         }
         void refresh();
@@ -47,21 +56,25 @@ export default function PickupBoard() {
                 }}>Full screen</button>
         </header>
         {offline && <p role="status" className="mb-4 text-xl text-amber-300">Reconnecting. Please check with the cashier.</p>}
-        {!orders && !offline && <p role="status">Loading orders…</p>}
+        {signInRequired && <p role="status">Sign in with a kitchen or admin account. <a className="underline" href="/staff">Staff sign in</a></p>}
+        {!orders && !offline && !signInRequired && <p role="status">Loading orders…</p>}
         <div className="grid gap-5 md:grid-cols-2">
-            <Column title="Preparing" tone="bg-amber-900" numbers={offline ? undefined : orders?.preparing} />
-            <Column title="Ready for pickup" tone="bg-emerald-800" numbers={offline ? undefined : orders?.ready} />
+            <Column title="Preparing" tone="bg-amber-900" tickets={offline ? undefined : orders?.preparing} />
+            <Column title="Ready for pickup" tone="bg-emerald-800" tickets={offline ? undefined : orders?.ready} />
         </div>
     </section>;
 }
 
-function Column({ title, tone, numbers }: { title: string; tone: string; numbers?: string[] }) {
+function Column({ title, tone, tickets }: { title: string; tone: string; tickets?: PickupTicket[] }) {
     return <section className="overflow-hidden rounded-2xl bg-stone-900">
         <h2 className={tone + " p-5 text-3xl font-bold sm:text-4xl"}>{title}</h2>
         <ul className="grid gap-3 p-5 xl:grid-cols-2">
-            {numbers?.map((number, index) => <li key={number + "-" + index}
-                className="rounded-lg bg-stone-800 px-4 py-3 font-mono text-2xl font-bold tracking-wide sm:text-3xl">#{number}</li>)}
-            {numbers?.length === 0 && <li className="text-lg text-stone-300">No orders</li>}
+            {tickets?.map(({ name, number }, index) => <li key={number + "-" + index}
+                className="rounded-lg bg-stone-800 px-4 py-3">
+                <p className="break-words text-3xl font-bold sm:text-4xl">{name || "Order"}</p>
+                <p className="mt-1 font-mono text-base text-stone-300">#{number}</p>
+            </li>)}
+            {tickets?.length === 0 && <li className="text-lg text-stone-300">No orders</li>}
         </ul>
     </section>;
 }

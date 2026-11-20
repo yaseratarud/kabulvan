@@ -326,6 +326,7 @@ function Kitchen({ run }: { run: Run }) {
                 {connected ? "Kitchen display connected" : "Connecting to kitchen orders…"}
             </p>
             <button className={button} onClick={() => void enableSound()}>{sound ? "Test sound" : "Enable sound"}</button>
+            <a href="/pickup-display" className={button}>Open TV board</a>
         </div>
         {connected && active.length === 0 && <p>No active orders.</p>}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
