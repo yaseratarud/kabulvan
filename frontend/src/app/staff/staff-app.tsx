@@ -48,6 +48,9 @@ export default function StaffApp() {
     const [employee, setEmployee] = useState<Employee | null | undefined>();
     const [error, setError] = useState("");
     const [signingIn, setSigningIn] = useState(false);
+    const [setupEnabled, setSetupEnabled] = useState(false);
+    const [setupOpen, setSetupOpen] = useState(false);
+    const [notice, setNotice] = useState("");
 
     const run: Run = async (action) => {
         setError("");
@@ -63,8 +66,29 @@ export default function StaffApp() {
         api<Employee>("me").then(setEmployee).catch((failure) => {
             if (!(failure instanceof StaffError && failure.status === 401)) setError(failure.message);
             setEmployee(null);
+            void api<{ enabled: boolean }>("setup").then(({ enabled }) => setSetupEnabled(enabled)).catch(() => {});
         });
     }, []);
+
+    async function setupAdmin(event: FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        const form = new FormData(event.currentTarget);
+        setSigningIn(true);
+        try {
+            await run(async () => {
+                if (form.get("pin") !== form.get("confirm_pin")) throw new Error("The PINs do not match.");
+                await api("setup", "POST", {
+                    name: form.get("name"), employee_id: form.get("employee_id"),
+                    pin: form.get("pin"), setup_code: form.get("setup_code"),
+                });
+                setSetupEnabled(false);
+                setSetupOpen(false);
+                setNotice("Administrator created. Sign in with the employee ID and PIN you chose.");
+            });
+        } finally {
+            setSigningIn(false);
+        }
+    }
 
     async function signIn(event: FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -102,11 +126,23 @@ export default function StaffApp() {
                 </div>
                 {error && <p role="alert" className="mb-4 rounded-xl bg-red-100 p-4 text-red-900">{error}</p>}
                 {employee === undefined && <p>Checking session…</p>}
-                {employee === null && <form className={card + " grid max-w-md gap-4"} onSubmit={signIn}>
+                {employee === null && notice && <p role="status" className="mb-4 text-emerald-800">{notice}</p>}
+                {employee === null && setupEnabled && setupOpen && <form className={card + " grid max-w-md gap-4"} onSubmit={setupAdmin}>
+                    <h2 className="text-xl font-bold">Create first administrator</h2>
+                    <label>Setup code<input className={field} name="setup_code" type="password" required minLength={32} maxLength={256} autoComplete="off" /></label>
+                    <label>Your name<input className={field} name="name" required maxLength={80} autoComplete="name" /></label>
+                    <label>Employee ID<input className={field} name="employee_id" required pattern="[A-Za-z0-9_\\-]{2,32}" autoComplete="username" autoCapitalize="characters" /></label>
+                    <label>PIN (6–12 digits)<input className={field} name="pin" type="password" required inputMode="numeric" pattern="[0-9]{6,12}" autoComplete="new-password" /></label>
+                    <label>Confirm PIN<input className={field} name="confirm_pin" type="password" required inputMode="numeric" pattern="[0-9]{6,12}" autoComplete="new-password" /></label>
+                    <button className={primary} disabled={signingIn}>{signingIn ? "Creating…" : "Create admin"}</button>
+                    <button className={button} type="button" disabled={signingIn} onClick={() => setSetupOpen(false)}>Back to sign in</button>
+                </form>}
+                {employee === null && !setupOpen && <form className={card + " grid max-w-md gap-4"} onSubmit={signIn}>
                     <label>Employee ID<input className={field} name="employee_id" required pattern="[A-Za-z0-9_\\-]{2,32}" autoComplete="username" autoCapitalize="characters" /></label>
                     <label>PIN<input className={field} name="pin" type="password" inputMode="numeric" pattern="[0-9]{6,12}" required autoComplete="current-password" /></label>
                     <button className={primary} disabled={signingIn}>{signingIn ? "Signing in…" : "Sign in"}</button>
                 </form>}
+                {employee === null && setupEnabled && !setupOpen && <button className={button + " mt-4"} onClick={() => setSetupOpen(true)}>Create first admin</button>}
                 {employee?.role === "cashier" && <Cashier run={run} />}
                 {employee?.role === "kitchen" && <Kitchen run={run} />}
                 {employee?.role === "admin" && <Admin run={run} />}

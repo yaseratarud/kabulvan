@@ -19,7 +19,7 @@ from pymongo.errors import DuplicateKeyError
 Role = Literal["cashier", "kitchen", "admin"]
 employee_pattern = r"^[A-Za-z0-9_-]{2,32}$"
 pin_pattern = r"^[0-9]{6,12}$"
-public_staff = {"pin_hash": 0, "version": 0, "attempts": 0}
+public_staff = {"pin_hash": 0, "version": 0, "attempts": 0, "first_admin": 0}
 
 
 def now():
@@ -37,6 +37,35 @@ def digest(token):
 class Login(BaseModel):
     employee_id: str = Field(pattern=employee_pattern)
     pin: str = Field(pattern=pin_pattern)
+
+
+class FirstAdmin(Login):
+    name: str = Field(min_length=1, max_length=80)
+
+
+class BrowserSetup(FirstAdmin):
+    setup_code: str = Field(min_length=32, max_length=256)
+
+
+async def create_first_admin(db, data: FirstAdmin):
+    name = data.name.strip()
+    if not name:
+        raise HTTPException(400, "Enter your name")
+    employees = db.staff_employees
+    if await employees.find_one({}, {"_id": 1}):
+        raise HTTPException(409, "Staff setup is already complete")
+    await employees.create_index("first_admin", unique=True, partialFilterExpression={"first_admin": True})
+    await db.staff_sessions.create_index("expires", expireAfterSeconds=0)
+    await db.staff_orders.create_index([("status", 1), ("created_at", 1), ("_id", 1)])
+    await db.staff_orders.create_index([("created_at", -1), ("_id", -1)])
+    try:
+        await employees.insert_one({
+            "_id": data.employee_id.upper(), "name": name, "role": "admin",
+            "active": True, "version": 1, "first_admin": True,
+            "pin_hash": await hash_pin(data.pin),
+        })
+    except DuplicateKeyError:
+        raise HTTPException(409, "Staff setup is already complete") from None
 
 
 class Employee(BaseModel):
@@ -100,6 +129,23 @@ def staff_router(db):
                 raise HTTPException(403, "This account does not have access")
             return employee
         return authorize
+
+    @router.get("/setup")
+    async def setup_status():
+        code = os.getenv("STAFF_SETUP_CODE", "")
+        if not 32 <= len(code) <= 256 or code == os.getenv("STAFF_PROXY_SECRET"):
+            return {"enabled": False}
+        return {"enabled": not bool(await employees.find_one({}, {"_id": 1}))}
+
+    @router.post("/setup", status_code=201)
+    async def setup(data: BrowserSetup):
+        code = os.getenv("STAFF_SETUP_CODE", "")
+        if not 32 <= len(code) <= 256 or code == os.getenv("STAFF_PROXY_SECRET"):
+            raise HTTPException(404, "Staff setup is unavailable")
+        if not secrets.compare_digest(code.encode(), data.setup_code.encode()):
+            raise HTTPException(403, "Incorrect setup code")
+        await create_first_admin(db, data)
+        return {"ok": True}
 
     @router.post("/login")
     async def login(data: Login):

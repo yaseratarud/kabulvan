@@ -5,7 +5,8 @@ import re
 
 
 from server import db
-from staff import employee_pattern, hash_pin, pin_pattern
+from fastapi import HTTPException
+from staff import FirstAdmin, create_first_admin, employee_pattern, pin_pattern
 
 
 async def bootstrap():
@@ -17,15 +18,10 @@ async def bootstrap():
         raise SystemExit("Enter a valid name and employee ID.")
     if not re.fullmatch(pin_pattern, pin) or pin != confirmation:
         raise SystemExit("Enter matching PINs containing 6–12 digits.")
-    if await db.staff_employees.find_one({"role": "admin", "active": True}):
-        raise SystemExit("An active administrator already exists.")
-    await db.staff_sessions.create_index("expires", expireAfterSeconds=0)
-    await db.staff_orders.create_index([("status", 1), ("created_at", 1), ("_id", 1)])
-    await db.staff_orders.create_index([("created_at", -1), ("_id", -1)])
-    await db.staff_employees.insert_one({
-        "_id": employee_id, "name": name, "role": "admin", "active": True,
-        "version": 1, "pin_hash": await hash_pin(pin),
-    })
+    try:
+        await create_first_admin(db, FirstAdmin(employee_id=employee_id, name=name, pin=pin))
+    except HTTPException as failure:
+        raise SystemExit(failure.detail) from None
     print("Administrator created.")
 
 
