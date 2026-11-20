@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter
+from staff import staff_router
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -68,6 +69,7 @@ async def get_status_checks():
 
 # Include the router in the main app
 app.include_router(api_router)
+app.include_router(staff_router(db))
 
 app.add_middleware(
     CORSMiddleware,
