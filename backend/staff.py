@@ -296,6 +296,22 @@ def staff_router(db):
             raise HTTPException(409, "Order has already changed")
         return result
 
+    def pickup_criteria():
+        return {"$or": [
+            {"status": {"$in": ["new", "preparing"]}},
+            {"status": "completed", "completed_at": {"$gte": (now() - timedelta(minutes=15)).isoformat()}},
+        ]}
+
+    @router.get("/pickup")
+    async def pickup_board():
+        tickets = orders.find(pickup_criteria(), {"_id": 0, "number": 1, "status": 1}).sort(
+            [("created_at", 1), ("_id", 1)]
+        )
+        preparing, ready = [], []
+        async for ticket in tickets:
+            (ready if ticket["status"] == "completed" else preparing).append(ticket["number"])
+        return {"preparing": preparing, "ready": ready}
+
     @router.get("/stream")
     async def stream(request: Request, employee=Depends(require("kitchen"))):
         async def updates():
@@ -308,7 +324,7 @@ def staff_router(db):
                     _, current = await session_for(request)
                     if not current or current["role"] != "kitchen":
                         break
-                tickets = await orders.find({"status": {"$in": ["new", "preparing"]}}).sort(
+                tickets = await orders.find(pickup_criteria()).sort(
                     [("created_at", 1), ("_id", 1)]
                 ).to_list(None)
                 payload = json.dumps(jsonable_encoder(tickets))

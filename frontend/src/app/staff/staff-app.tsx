@@ -309,13 +309,16 @@ function Kitchen({ run }: { run: Run }) {
                 });
                 setOrders((current) => current.flatMap((ticket) => {
                     if (ticket._id !== updated._id) return [ticket];
-                    return updated.status === "completed" ? [] : [updated];
+                    return [updated];
                 }));
             });
         } finally {
             setPending(null);
         }
     }
+
+    const active = orders.filter((order) => order.status !== "completed");
+    const ready = orders.filter((order) => order.status === "completed").reverse();
 
     return <>
         <div className="mb-5 flex flex-wrap items-center gap-4">
@@ -324,25 +327,31 @@ function Kitchen({ run }: { run: Run }) {
             </p>
             <button className={button} onClick={() => void enableSound()}>{sound ? "Test sound" : "Enable sound"}</button>
         </div>
-        {connected && orders.length === 0 && <p>No active orders.</p>}
+        {connected && active.length === 0 && <p>No active orders.</p>}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {orders.map((order) => <article key={order._id} className={card}>
+            {active.map((order) => <article key={order._id} className={card}>
                 <Ticket order={order} />
                 <button className={primary + " mt-4 w-full"} disabled={pending !== null} onClick={() => void advance(order)}>
-                    {order.status === "new" ? "Mark preparing" : "Mark completed"}
+                    {order.status === "new" ? "Mark preparing" : "Mark ready"}
                 </button>
             </article>)}
         </div>
+        {ready.length > 0 && <section className="mt-8">
+            <h2 className="mb-3 text-2xl font-bold">Ready for pickup</h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {ready.map((order) => <article key={order._id} className={card}><Ticket order={order} /></article>)}
+            </div>
+        </section>}
     </>;
 }
 
 function Ticket({ order }: { order: Order }) {
     return <>
         <div className="flex items-start justify-between gap-3">
-            <h3 className="text-xl font-bold">Order #{order.number}</h3>
-            <span className="rounded-full bg-emerald-100 px-3 py-1 capitalize text-emerald-900">{order.status}</span>
+            <h3 className="min-w-0 break-words text-xl font-bold">{order.customer_name || "Order #" + order.number}</h3>
+            <span className="rounded-full bg-emerald-100 px-3 py-1 capitalize text-emerald-900">{order.status === "completed" ? "Ready" : order.status}</span>
         </div>
-        {order.customer_name && <p className="mt-2 break-words text-lg font-semibold">{order.customer_name}</p>}
+        {order.customer_name && <p className="mt-1 font-semibold">Order #{order.number}</p>}
         <p className="mt-1 text-sm text-stone-600">{dateTime.format(new Date(order.created_at))} · {order.cashier}</p>
         <ul className="mt-3 grid gap-1">
             {order.items.map((item, index) => <li key={index}>{item.quantity} × {item.name}</li>)}
